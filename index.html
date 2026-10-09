@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mahabharat Akinator – Guess the Character</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Georgia,'Noto Serif Devanagari',serif;background:radial-gradient(circle at top,#7a2e0e,#2b0d05 70%);color:#fff3dc}
+.card{width:100%;max-width:520px;background:rgba(0,0,0,.35);border:2px solid #e8a33d;border-radius:20px;padding:28px 22px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+h1{margin:0 0 4px;font-size:1.7rem;color:#ffc857}
+.sub{color:#e8b77a;margin:0 0 20px;font-size:.95rem}
+.q{font-size:1.25rem;min-height:70px;margin:18px 0}
+.btns{display:grid;gap:10px}
+button{font:inherit;cursor:pointer;border:1px solid #e8a33d;background:#3d1608;color:#fff3dc;padding:12px;border-radius:12px;font-size:1rem;transition:.15s}
+button:hover{background:#e8a33d;color:#2b0d05}
+.main{background:#e8a33d;color:#2b0d05;font-weight:bold}
+.bar{height:8px;background:#3d1608;border-radius:8px;overflow:hidden;margin-bottom:6px}
+.bar i{display:block;height:100%;width:0;background:#ffc857;transition:width .3s}
+.small{font-size:.85rem;color:#e8b77a}
+.av{width:90px;height:90px;border-radius:50%;background:#e8a33d;color:#2b0d05;font-size:2.8rem;line-height:90px;margin:10px auto}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🏹 Mahabharat Akinator</h1>
+  <p class="sub">महाभारत — think of a character, I will guess!</p>
+  <div id="start">
+    <p class="q">Think of any character from the Mahabharata. Answer honestly and I will try to guess who it is.</p>
+    <button class="main" onclick="startGame()">Begin</button>
+  </div>
+  <div id="play" class="hide">
+    <div class="bar"><i id="prog"></i></div>
+    <div class="small" id="count"></div>
+    <p class="q" id="question"></p>
+    <div class="btns">
+      <button onclick="answer(.92)">Yes</button>
+      <button onclick="answer(.7)">Probably</button>
+      <button onclick="answer(.5)">Don't know</button>
+      <button onclick="answer(.3)">Probably not</button>
+      <button onclick="answer(.08)">No</button>
+    </div>
+  </div>
+  <div id="guess" class="hide">
+    <p class="small">I think your character is...</p>
+    <div class="av" id="av"></div>
+    <h2 id="gname" style="margin:4px 0;color:#ffc857"></h2>
+    <p id="gdesc" class="small"></p>
+    <div class="btns">
+      <button class="main" onclick="correct()">Yes, that's right!</button>
+      <button onclick="wrong()">No, keep guessing</button>
+    </div>
+  </div>
+  <div id="end" class="hide">
+    <p class="q" id="endmsg"></p>
+    <button class="main" onclick="startGame()">Play again</button>
+  </div>
+</div>
+<script>
+const Q = {
+ m:"Is your character male?", f:"Is your character female?",
+ P:"Is your character one of the five Pandava brothers?",
+ K:"Is your character one of the hundred Kaurava brothers?",
+ Y:"Was your character on the Pandavas' side?",
+ Z:"Was your character on the Kauravas' side?",
+ W:"Does your character fight in the Kurukshetra war?",
+ D:"Does your character die in the war (or because of it)?",
+ A:"Is your character a famous archer?",
+ M:"Is your character famous for fighting with a mace?",
+ G:"Is your character a god, an avatar, or a child of a god?",
+ B:"Is your character blind (or blindfolded)?",
+ E:"Is your character from the elder generation (a grandparent or parent figure)?",
+ Q:"Is your character a teacher, sage or wise counsellor?",
+ V:"Is your character known for cunning schemes?",
+ F:"Was your character raised by foster or adoptive parents?",
+ X:"Did your character spend time in exile or the forest?",
+ U:"Is your character under a famous curse?",
+ O:"Is your character a mother?",
+ T:"Is your character from outside the Kuru royal family (e.g. Panchala, Gandhara, Yadava, tribal, sage)?",
+ L:"Is your character known for a famous vow?",
+ I:"Is your character famous for generosity or charity?",
+ J:"Is your character a son of Kunti?",
+ R:"Did your character rule as a king or queen?",
+ H:"Does your character have magical or non-human powers?"
+};
+const C = [
+ ["Krishna","mYGQVTL","Avatar of Vishnu, Arjuna's charioteer and guide"],
+ ["Arjuna","mPYWAGXJL","Pandava archer who received the Bhagavad Gita"],
+ ["Yudhishthira","mPYWGXJR","Eldest Pandava, Dharmaraja"],
+ ["Bhima","mPYWMGXJL","Mighty Pandava who killed Duryodhana and Dushasana"],
+ ["Nakula & Sahadeva","mPYWGX","The twin Pandavas, sons of Madri"],
+ ["Draupadi","fYGXLTO","Born of fire, wife of the Pandavas"],
+ ["Kunti","fYGOEXFT","Mother of the Pandavas and Karna"],
+ ["Karna","mZWAGDFUIJL","Generous warrior, Kunti's firstborn"],
+ ["Duryodhana","mKZWMDRV","Eldest Kaurava"],
+ ["Dushasana","mKZWD","Kaurava who dragged Draupadi to the court"],
+ ["Shakuni","mZVDT","Cunning prince of Gandhara, master of dice"],
+ ["Dhritarashtra","mBERZ","Blind king of Hastinapur"],
+ ["Gandhari","fBEOTZL","Queen who blindfolded herself, mother of the Kauravas"],
+ ["Bhishma","mZWAGDELU","Grandsire who vowed celibacy and chose his time of death"],
+ ["Drona","mZWAQDET","Guru of the Pandavas and Kauravas"],
+ ["Ashwatthama","mZWATU","Drona's son, cursed to wander the earth"],
+ ["Kripacharya","mZWQE","Royal teacher who survived the war"],
+ ["Vidura","mYEQGT","Wise, righteous minister of Hastinapur"],
+ ["Vyasa","mEQGTH","Sage who composed the Mahabharata"],
+ ["Abhimanyu","mYWAD","Arjuna's young son who entered the chakravyuha"],
+ ["Ghatotkacha","mYWDHT","Bhima's half-rakshasa son"],
+ ["Eklavya","mAT","Tribal archer who gave his thumb to Drona"],
+ ["Dhrishtadyumna","mYWAGDT","Fire-born Panchala prince, commander of the Pandava army"],
+ ["Jayadratha","mZWDTR","King of Sindhu, killed by Arjuna"],
+ ["Satyaki","mYWAT","Yadava warrior and friend of Krishna"],
+ ["Balarama","mTGM","Krishna's elder brother, expert in the mace"],
+ ["Subhadra","fYTO","Krishna's sister, Arjuna's wife, mother of Abhimanyu"],
+ ["Hidimba","fYHTO","Rakshasi who married Bhima, mother of Ghatotkacha"],
+ ["Shantanu","mRE","King of Hastinapur, father of Bhishma"],
+ ["Satyavati","fTOER","Fisherman's daughter who became queen of Hastinapur"],
+ ["Pandu","mYREUX","Father of the Pandavas, cursed by a sage"],
+ ["Drupada","mYRTWDEL","King of Panchala, father of Draupadi"],
+ ["Sanjaya","mZTH","Charioteer who narrated the war with divine sight"],
+ ["Yuyutsu","mKYW","The Kaurava who joined the Pandavas"],
+ ["Shalya","mZWDRMT","King of Madra, Karna's charioteer in the war"],
+ ["Parashurama","mQGEAT","Warrior-sage, teacher of Bhishma, Drona and Karna"],
+ ["Madri","fORT","Pandu's second wife, mother of Nakula and Sahadeva"]
+];
+let S, asked, tried, cur, MAXQ = 20;
+const $ = id => document.getElementById(id);
+const show = id => ["start","play","guess","end"].forEach(x => $(x).classList.toggle("hide", x !== id));
+const has = (c, t) => C[c][1].includes(t) ? 1 : 0;
+function startGame(){ S = C.map(() => 1); asked = []; tried = []; next(); }
+function norm(){ const t = S.reduce((a,b)=>a+b,0)||1; return S.map(s=>s/t); }
+function getTop(){ const p = norm(); let i = 0; p.forEach((v,j)=>{ if(v>p[i]) i=j; }); return [i,p[i]]; }
+function pickQuestion(){
+  const p = norm(); let bt = null, bd = 9;
+  for (const t in Q){
+    if (asked.includes(t)) continue;
+    let y = 0; C.forEach((c,i)=>{ y += p[i]*has(i,t); });
+    if (y < .02 || y > .98) continue;
+    const d = Math.abs(y-.5) + Math.random()*.01;
+    if (d < bd){ bd = d; bt = t; }
+  }
+  return bt;
+}
+function next(){
+  const [i,pr] = getTop();
+  if (asked.length >= 5 && pr > .85) return makeGuess();
+  cur = pickQuestion();
+  if (!cur || asked.length >= MAXQ) return makeGuess();
+  $("question").textContent = Q[cur];
+  $("count").textContent = "Question " + (asked.length+1);
+  $("prog").style.width = Math.min(100,(asked.length/MAXQ)*100) + "%";
+  show("play");
+}
+function answer(p){
+  if (p !== .5) C.forEach((c,i)=>{ S[i] *= has(i,cur) ? p : (1-p); });
+  asked.push(cur); next();
+}
+function makeGuess(){
+  const order = S.map((s,i)=>[s,i]).filter(x=>!tried.includes(x[1])).sort((a,b)=>b[0]-a[0]);
+  if (!order.length){ $("endmsg").textContent = "You beat me! I could not guess your character. 🙏"; return show("end"); }
+  cur = order[0][1];
+  $("av").textContent = C[cur][0][0];
+  $("gname").textContent = C[cur][0];
+  $("gdesc").textContent = C[cur][2];
+  show("guess");
+}
+function correct(){ $("endmsg").textContent = "Jai Shri Krishna! I guessed " + C[cur][0] + " in " + asked.length + " questions. 🎉"; show("end"); }
+function wrong(){ tried.push(cur); S[cur] = 0; if (tried.length >= 3) return makeGuess(); next(); }
+</script>
+</body>
+</html>
