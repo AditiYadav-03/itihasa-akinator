@@ -13,7 +13,9 @@ h1{margin:0 0 4px;font-size:1.7rem;color:#ffc857}
 .q{font-size:1.25rem;min-height:70px;margin:18px 0}
 .btns{display:grid;gap:10px}
 button{font:inherit;cursor:pointer;border:1px solid #e8a33d;background:#3d1608;color:#fff3dc;padding:12px;border-radius:12px;font-size:1rem;transition:.15s}
-button:hover{background:#e8a33d;color:#2b0d05}
+@media (hover:hover){button:hover{background:#e8a33d;color:#2b0d05}}
+button:active{background:#e8a33d;color:#2b0d05}
+button:focus{outline:none}
 .main{background:#e8a33d;color:#2b0d05;font-weight:bold}
 .bar{height:8px;background:#3d1608;border-radius:8px;overflow:hidden;margin-bottom:6px}
 .bar i{display:block;height:100%;width:0;background:#ffc857;transition:width .3s}
@@ -152,6 +154,7 @@ function next(){
   show("play");
 }
 function answer(p){
+  if (document.activeElement) document.activeElement.blur();
   if (p !== .5) C.forEach((c,i)=>{ S[i] *= has(i,cur) ? p : (1-p); });
   asked.push(cur); next();
 }
